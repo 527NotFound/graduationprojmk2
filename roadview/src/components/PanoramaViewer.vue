@@ -1,5 +1,15 @@
 <template>
-  <div ref="container" class="panorama-container"></div>
+  <div class="panorama-wrapper">
+    <div ref="container" class="panorama-container"></div>
+    <div class="navigation-buttons">
+      <button class="nav-button prev" @click="prevImage">
+        <span class="arrow">←</span>
+      </button>
+      <button class="nav-button next" @click="nextImage">
+        <span class="arrow">→</span>
+      </button>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -8,6 +18,38 @@ import * as THREE from 'three'
 
 const container = ref(null)
 let camera, scene, renderer, sphere
+
+// 이미지 목록 정의
+const images = [
+  '/src/assets/roadview_Image/panorama.jpg',
+  '/src/assets/roadview_Image/panorama2.jpg',
+  '/src/assets/roadview_Image/panorama3.jpg'
+]
+
+let currentImageIndex = 0
+
+// 이미지 전환 함수
+function changeImage(direction) {
+  if (direction === 'next') {
+    currentImageIndex = (currentImageIndex + 1) % images.length
+  } else {
+    currentImageIndex = (currentImageIndex - 1 + images.length) % images.length
+  }
+
+  const textureLoader = new THREE.TextureLoader()
+  textureLoader.load(images[currentImageIndex], (texture) => {
+    sphere.material.map = texture
+    sphere.material.needsUpdate = true
+  })
+}
+
+function nextImage() {
+  changeImage('next')
+}
+
+function prevImage() {
+  changeImage('prev')
+}
 
 onMounted(() => {
   // 카메라 설정
@@ -23,7 +65,7 @@ onMounted(() => {
 
   // 이미지 로더
   const textureLoader = new THREE.TextureLoader()
-  const texture = textureLoader.load('/src/assets/panorama.jpg') // 이미지 경로 설정
+  const texture = textureLoader.load('/src/assets/roadview_Image/panorama.jpg') // 이미지 경로 설정
   const material = new THREE.MeshBasicMaterial({ map: texture })
   sphere = new THREE.Mesh(geometry, material)
   scene.add(sphere)
@@ -87,10 +129,6 @@ onMounted(() => {
   }
 
   function update() {
-    if (!isUserInteracting) {
-      lon += 0.1
-    }
-
     lat = Math.max(-85, Math.min(85, lat))
     const phi = THREE.MathUtils.degToRad(90 - lat)
     const theta = THREE.MathUtils.degToRad(lon)
@@ -121,6 +159,12 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.panorama-wrapper {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
 .panorama-container {
   position: fixed;
   top: 0;
@@ -130,6 +174,38 @@ onBeforeUnmount(() => {
   overflow: hidden;
   margin: 0;
   padding: 0;
+}
+
+.navigation-buttons {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 20px;
+  z-index: 1000;
+}
+
+.nav-button {
+  background-color: rgba(255, 255, 255, 0.7);
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s;
+}
+
+.nav-button:hover {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+.arrow {
+  font-size: 24px;
+  color: #333;
 }
 
 :deep(canvas) {
